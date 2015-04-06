@@ -27,41 +27,63 @@
 		var output = document.getElementById("output");
 		var form = document.getElementById("form");
 
-		try {
+		// Active servers
+		var hosts = ["ws://localhost:9876/test", "ws://localhost:9817/test", "ws://localhost:9877/test"]
+		var stateConnection = 0;
+		// Open new socket
+		function init(host) {
+			
+			// WebSocket object
+			var s = null;
 
-			var host = "ws://localhost:9876/test";
-			console.log("Host:", host);
-			
-			var s = new WebSocket(host);
-			
-			s.onopen = function (e) {
-				console.log("Socket opened.");
-			};
-			
-			s.onclose = function (e) {
-				console.log("Socket closed.");
-			};
-			
-			s.onmessage = function (e) {
-				console.log("Socket message:", e.data);
-				var p = document.createElement("p");
-				p.innerHTML = e.data;
-				output.appendChild(p);
-			};
-			
-			s.onerror = function (e) {
-				console.log("Socket error:", e);
-			};
-			
-		} catch (ex) {
-			console.log("Socket exception:", ex);
+			// Create WebSocket object
+			try {
+				console.log("Host:", host);
+				
+				s = new WebSocket(host);
+
+				s.onopen = function (e) {
+					stateConnection = 1;
+					console.log('Obj', s.readyState);
+					console.log("Socket opened.");
+				};
+
+				s.onclose = function (e) {
+					s.close();
+					console.log("Socket closed.");
+					var index = (Math.floor(Math.random() * (hosts.length - 0) + 0));
+					socket = init(hosts[index]);
+				}
+
+				s.onerror = function (e) {
+					stateConnection = 0;
+					console.log("Socket exception:", e);
+				};
+
+				s.onmessage = function (e) {
+					console.log("Socket message:", e.data);
+					var p = document.createElement("p");
+					p.innerHTML = e.data;
+					output.appendChild(p);
+				};
+				
+			} catch (ex) {
+				stateConnection = 0;
+				console.log("Socket exception:", ex);
+				s.close()
+				s = null;
+			}
+
+			return s;
 		}
+
+		var socket = init(hosts[0]);
 
 		form.addEventListener("submit", function (e) {
 			e.preventDefault();
-			s.send(inputBox.value);
+			socket.send(inputBox.value);
 			inputBox.value = "";
-		}, false)
+			}, false)
 
 	</script>
  
