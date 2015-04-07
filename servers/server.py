@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-import socket, hashlib, threading, base64, struct
+import socket, hashlib, threading, base64, struct, ast
 
 class WebSocketServer:
 
@@ -26,7 +26,9 @@ class WebSocketServer:
             threading.Thread(target = ClassName, args = (conn, addr, data, self.vurGame)).start()
          elif data:
             self.vurGame.commonData = data
-            print self.vurGame.commonData
+            self.vurGame.parseData()
+            print self.vurGame.userName
+            print self.vurGame.board
 
 class WebSocketItem:
 
@@ -255,11 +257,13 @@ class Game:
       pass
 
    def parseData(self):
-      pass
+      data = ast.literal_eval(self.commonData)
+      self.userName = data['players']
+      self.board = data['board']
+
 
    def formData(self):
       self.commonData['players'] = self.userName
-      self.board['0'] =  'cross'
       self.commonData['board'] = self.board
       return self.commonData
 
@@ -296,7 +300,6 @@ class Handler(WebSocketItem):
          self.gameItem.userName.append(str(self.receivedMessage))
          self.playerName = str(self.receivedMessage)
          self.playerNum = len(self.gameItem.userName)
-         #self.synchData('My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player')
          self.synchData(str(self.gameItem.formData()))
          print 'My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player'
          while len(self.gameItem.userName) < 2:
@@ -306,7 +309,6 @@ class Handler(WebSocketItem):
       if len(self.gameItem.userName) >= 2:
          self.sendMessage('GAME BEGIN')
          print 'GAME BEGIN'
-         #self.synchData('GAME BEGIN')
          self.synchData(str(self.gameItem.formData()))
          
          while 1:
@@ -314,7 +316,6 @@ class Handler(WebSocketItem):
             for byte in data:
                self.parseMessage(ord(byte))
             self.state = 1
-            #self.synchData(self.playerName + ' step |||||| game data:' + str(self.receivedMessage))
             self.synchData(str(self.gameItem.formData()))
             print str(self.receivedMessage)
 
