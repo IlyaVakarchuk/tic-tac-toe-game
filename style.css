@@ -1,19 +1,22 @@
 #output {
   border: solid 1px #000; }
 
-#board #table {
-  padding: 0;
-  width: auto;
-  display: inline-block; }
-  #board #table .cell {
-    width: 80px;
-    height: 80px;
-    list-style-type: none;
-    background-color: #3faac1;
-    margin-left: 5px;
-    margin-bottom: 5px;
+#board {
+  width: 280px;
+  height: 280px; }
+  #board #table {
+    padding: 0;
+    width: auto;
     display: inline-block; }
-  #board #table .check {
-    background-color: #e57272; }
+    #board #table .cell {
+      width: 80px;
+      height: 80px;
+      list-style-type: none;
+      background-color: #3faac1;
+      margin-left: 5px;
+      margin-bottom: 5px;
+      display: inline-block; }
+    #board #table .check {
+      background-color: #e57272; }
 
 /*# sourceMappingURL=style.css.map */
