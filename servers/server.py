@@ -7,27 +7,27 @@ class WebSocketServer:
 
    mainsocket = ''
    playersCount = 0
-   parentServer = ''
 
    def __init__(self, ClassName, host = '', port = 9876):
       self.mainsocket = socket.socket()
       self.mainsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       self.mainsocket.bind((host, port))
-      self.mainsocket.listen(2)
-      self.parentServer = ServArch(10)
-      self.parentServer.serverForever()
+      self.mainsocket.listen(5)
       self.serverActiveOn(ClassName)
 
    def serverActiveOn(self, ClassName):
       while 1:
          conn, addr = self.mainsocket.accept()
-         print 'Connection from: ', addr
-         self.parentServer.playerLogining()
-         threading.Thread(target = ClassName, args = (conn, addr, self.parentServer)).start()
+         
+         data = conn.recv(1024)
+         if 'HTTP/1.1' in data:
+            print 'Connection from: ', addr
+            self.playersCount += 1
+            threading.Thread(target = ClassName, args = (conn, addr, data, self.playersCount)).start()
+         elif data:
+            print data
 
 class WebSocketItem:
-
-   parentServer = None
 
    ControlFrames = {
                   'close' : 0x8,
@@ -69,17 +69,21 @@ class WebSocketItem:
    # Message from client
    receivedMessage = None
 
-   def __init__(self, client, addr, parentServer):
-      self.parentServer = parentServer
+   playersCount = 0
+
+   def __init__(self, client, addr, header, playersCount):
+      self.playersCount = playersCount
       self.client = client
       self.addr = addr
-      self.handshaked()
+      self.handshaked(header)
       self.handlers()
 
    # Opening Handshake
    # Get header from client and send server answer
-   def handshaked(self):
-      data = self.client.recv(1024)
+   def handshaked(self, header):
+
+      #data = self.client.recv(1024)
+      data = header
       key = self.getKey(data)
 
       # Encode hash (client side key + server string) by Base64
@@ -238,88 +242,49 @@ class WebSocketItem:
                return parts[1]
       return headers
 
-class ServArch:
-   sock = ''
-   HOST = ''
-   PORT = ''
-
-   playersCount = 0
-   playersName = {}
-   
-   serversAddres = []
-   
-   otherServers = {'serv01' : ['localhost', 9090]}
-
-   def __init__(self, listenCount, host = 'localhost', port = 8080):
-      self.sock = socket.socket()
-      self.HOST = host
-      self.PORT = port
-      self.sock.bind((self.HOST, self.PORT))
-      self.sock.listen(listenCount)
-
-   def playerLogining(self):
-      self.playersCount += 1
-
-   def setName(self, name):
-      print name
-      self.playersName['player' + str(len(self.playersName))] = name
-      print self.playersName
-
-   def synchData(self, data):
-      for item in self.otherServers:
-         self.sendData(item[0], item[1], data)
-
-   def sendData(self, host, port, data):
-      sc = socket.socket()
-      sc.connect((host, port))
-      sc.send(data)
-      sc.close()
-
-   def gameBegining(self):
-      print 'game begining'
-      while 1:
-         pass
-
-   def serverForever(self):
-      while 1:
-         conn, addr = self.sock.accept()
-         while 1:
-            data = conn.recv(1024)
-            if data:
-               print data.upper()
-            #if not data:
-               #break
-            #conn.send(data.upper())
-
-      conn.close()
-
 class Handler(WebSocketItem):
 
+   secondaryServers = [['', 9877], ['', 9872]]
+
+   def synchData(self, data):
+      for i in range(0, len(self.secondaryServers)):
+         print self.secondaryServers[i][0], self.secondaryServers[i][1]
+         self.sendData(data, self.secondaryServers[i][0], self.secondaryServers[i][1])
+
+   def sendData(self, data, host, port):
+      sck = socket.socket()
+      try:
+         sck.connect((host, port))
+      except Exception:
+         pass
+      else:
+         sck.send(data)
+      finally:
+         sck.close()
+
+
    def handlers(self):
-      if self.parentServer.playersCount == 1 or self.parentServer.playersCount == 2:
-         print 'Enter Your name'
+      if self.playersCount <= 2:
          data = self.client.recv(1024)
          for byte in data:
             self.parseMessage(ord(byte))
-         self.state = 1
-         self.parentServer.setName(str(self.receivedMessage))
-         print 'thank you'
+         self.synchData('My name :' + str(self.receivedMessage) + ', I am ' + str(self.playersCount) + ' player')
+         print 'My name :' + str(self.receivedMessage) + ', I am ' + str(self.playersCount) + ' player'
 
-      print len(self.parentServer.playersName)
-      if len(self.parentServer.playersName) == 2:
-         self.parentServer.gameBegining()
-      #while 1:
-               #ms = raw_input('enter message: ')
-               #self.sendMessage(ms)
-         #data = self.client.recv(1024)
-         #for byte in data:
-            #self.parseMessage(ord(byte))
-         #print str(self.receivedMessage)
-         #self.state = 1
-         #self.parentServer.sendData(str(self.receivedMessage))
-               #serv.serverForever()
-               #self.sendMessage(str(self.receivedMessage))
-               #self.state = 1
-            #print 'Client closed:', self.addr
+      while 1:
+            #ms = raw_input('enter message: ')
+            #self.sendMessage(ms)
+            data = self.client.recv(1024)
+            for byte in data:
+               self.parseMessage(ord(byte))
+            print str(self.receivedMessage)
+            self.state = 1
+            sck = socket.socket()
+            sck.connect(('', 9877))
+            sck.send(str(self.receivedMessage))
+            
+            #self.sendMessage(str(self.receivedMessage))
+            #self.state = 1
+         #print 'Client closed:', self.addr
 
 WebSocketServer(Handler)
