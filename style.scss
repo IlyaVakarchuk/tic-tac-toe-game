@@ -1,0 +1,25 @@
+#output {
+	border: solid 1px #000;
+}
+
+#board {
+	#table {
+		//background-color: #3faac1;
+		padding: 0;
+		width: auto;
+		display: inline-block;
+		.cell {
+			width: 80px;
+			height: 80px;
+			list-style-type: none;
+			background-color: #3faac1;
+			margin-left: 5px;
+			margin-bottom: 5px;
+			display: inline-block;
+		}
+
+		.check {
+			background-color: #e57272;
+		}
+	}	
+}
