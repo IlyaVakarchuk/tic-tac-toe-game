@@ -6,13 +6,14 @@ import socket, hashlib, threading, base64, struct
 class WebSocketServer:
 
    mainsocket = ''
-   playersCount = 0
+   vurGame = None
 
    def __init__(self, ClassName, host = '', port = 9876):
       self.mainsocket = socket.socket()
       self.mainsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       self.mainsocket.bind((host, port))
       self.mainsocket.listen(5)
+      self.vurGame = Game()
       self.serverActiveOn(ClassName)
 
    def serverActiveOn(self, ClassName):
@@ -22,8 +23,7 @@ class WebSocketServer:
          data = conn.recv(1024)
          if 'HTTP/1.1' in data:
             print 'Connection from: ', addr
-            self.playersCount += 1
-            threading.Thread(target = ClassName, args = (conn, addr, data, self.playersCount)).start()
+            threading.Thread(target = ClassName, args = (conn, addr, data, self.vurGame)).start()
          elif data:
             print data
 
@@ -69,10 +69,10 @@ class WebSocketItem:
    # Message from client
    receivedMessage = None
 
-   playersCount = 0
+   gameItem = None
 
-   def __init__(self, client, addr, header, playersCount):
-      self.playersCount = playersCount
+   def __init__(self, client, addr, header, gameItem):
+      self.gameItem = gameItem
       self.client = client
       self.addr = addr
       self.handshaked(header)
@@ -242,13 +242,28 @@ class WebSocketItem:
                return parts[1]
       return headers
 
+# Games Item
+# Contains common data for all users
+class Game:
+   userName = []
+   board = None
+
+   def __init__(self):
+      pass
+
+   def game():
+      pass
+
 class Handler(WebSocketItem):
 
+   playerNum = 0
    secondaryServers = [['', 9877], ['', 9872]]
+   gameState = 0
+
+   playerName = ''
 
    def synchData(self, data):
       for i in range(0, len(self.secondaryServers)):
-         print self.secondaryServers[i][0], self.secondaryServers[i][1]
          self.sendData(data, self.secondaryServers[i][0], self.secondaryServers[i][1])
 
    def sendData(self, data, host, port):
@@ -262,26 +277,45 @@ class Handler(WebSocketItem):
       finally:
          sck.close()
 
-
    def handlers(self):
-      if self.playersCount <= 2:
+      if len(self.gameItem.userName) < 2:
          data = self.client.recv(1024)
          for byte in data:
             self.parseMessage(ord(byte))
-         self.synchData('My name :' + str(self.receivedMessage) + ', I am ' + str(self.playersCount) + ' player')
-         print 'My name :' + str(self.receivedMessage) + ', I am ' + str(self.playersCount) + ' player'
+         self.state = 1
+         self.gameItem.userName.append(str(self.receivedMessage))
+         self.playerName = str(self.receivedMessage)
+         self.playerNum = len(self.gameItem.userName)
+         self.synchData('My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player')
+         print 'My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player'
+         while len(self.gameItem.userName) < 2:
+            pass
 
-      while 1:
-            #ms = raw_input('enter message: ')
-            #self.sendMessage(ms)
+      
+      if len(self.gameItem.userName) >= 2:
+         self.sendMessage('GAME BEGIN')
+         print 'GAME BEGIN'
+         self.synchData('GAME BEGIN')
+         
+         while 1:
             data = self.client.recv(1024)
             for byte in data:
                self.parseMessage(ord(byte))
-            print str(self.receivedMessage)
             self.state = 1
-            sck = socket.socket()
-            sck.connect(('', 9877))
-            sck.send(str(self.receivedMessage))
+            self.synchData(self.playerName + ' step |||||| game data:' + str(self.receivedMessage))
+            print str(self.receivedMessage)
+
+      #while 1:
+            #ms = raw_input('enter message: ')
+            #self.sendMessage(ms)
+        #    data = self.client.recv(1024)
+         #   for byte in data:
+          #     self.parseMessage(ord(byte))
+           # print str(self.receivedMessage)
+            #self.state = 1
+            #sck = socket.socket()
+            #sck.connect(('', 9877))
+            #sck.send(str(self.receivedMessage))
             
             #self.sendMessage(str(self.receivedMessage))
             #self.state = 1
