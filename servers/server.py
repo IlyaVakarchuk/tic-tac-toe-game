@@ -25,7 +25,8 @@ class WebSocketServer:
             print 'Connection from: ', addr
             threading.Thread(target = ClassName, args = (conn, addr, data, self.vurGame)).start()
          elif data:
-            print data
+            self.vurGame.commonData = data
+            print self.vurGame.commonData
 
 class WebSocketItem:
 
@@ -246,13 +247,22 @@ class WebSocketItem:
 # Contains common data for all users
 class Game:
    userName = []
-   board = None
+   board = {}
+
+   commonData = {}
 
    def __init__(self):
       pass
 
-   def game():
+   def parseData(self):
       pass
+
+   def formData(self):
+      self.commonData['players'] = self.userName
+      self.board['0'] =  'cross'
+      self.commonData['board'] = self.board
+      return self.commonData
+
 
 class Handler(WebSocketItem):
 
@@ -286,7 +296,8 @@ class Handler(WebSocketItem):
          self.gameItem.userName.append(str(self.receivedMessage))
          self.playerName = str(self.receivedMessage)
          self.playerNum = len(self.gameItem.userName)
-         self.synchData('My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player')
+         #self.synchData('My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player')
+         self.synchData(str(self.gameItem.formData()))
          print 'My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player'
          while len(self.gameItem.userName) < 2:
             pass
@@ -295,14 +306,16 @@ class Handler(WebSocketItem):
       if len(self.gameItem.userName) >= 2:
          self.sendMessage('GAME BEGIN')
          print 'GAME BEGIN'
-         self.synchData('GAME BEGIN')
+         #self.synchData('GAME BEGIN')
+         self.synchData(str(self.gameItem.formData()))
          
          while 1:
             data = self.client.recv(1024)
             for byte in data:
                self.parseMessage(ord(byte))
             self.state = 1
-            self.synchData(self.playerName + ' step |||||| game data:' + str(self.receivedMessage))
+            #self.synchData(self.playerName + ' step |||||| game data:' + str(self.receivedMessage))
+            self.synchData(str(self.gameItem.formData()))
             print str(self.receivedMessage)
 
       #while 1:
