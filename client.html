@@ -2,90 +2,27 @@
 <head>
 	<title>WebSocket Client</title>
 	<meta charset='utf-8'>
-	<style>
-		#output {
-			border: solid 1px #000;
-		}
-	</style>
+	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
 	
 	<form id="form">
 		<input type="text" id="message">
-		<!--<textarea rows="10" cols="45" id="message" name="text"></textarea> -->
-		 <!--<input type="file" name="pic" id="message" accept="image/*"> -->
 		<button type="submit">Send</button>
+		
 	</form>
-	
+	<button id="init">Connect</button>
 	<hr>
+
+	<article id='board'>
+		<ul id='table'>
+			<li class='cell' data-item='0 0'></li> <li class='cell' data-item='0 1'></li> <li class='cell' data-item='0 2'></li> <br>
+			<li class='cell' data-item='1 0'></li> <li class='cell' data-item='1 1'></li> <li class='cell' data-item='1 2'></li> <br>
+			<li class='cell' data-item='2 0'></li> <li class='cell' data-item='2 1'></li> <li class='cell' data-item='2 2'></li> <br>
+		</ul>
+	</article>
 	
 	<div id="output"></div>
-	
-	<script>
-	
-		var inputBox = document.getElementById("message");
-		var output = document.getElementById("output");
-		var form = document.getElementById("form");
-
-		// Active servers
-		var hosts = ["ws://localhost:9876/test", "ws://localhost:9817/test", "ws://localhost:9877/test"]
-		var stateConnection = 0;
-		// Open new socket
-		function init(host) {
-			
-			// WebSocket object
-			var s = null;
-
-			// Create WebSocket object
-			try {
-				console.log("Host:", host);
-				
-				s = new WebSocket(host);
-
-				s.onopen = function (e) {
-					stateConnection = 1;
-					console.log('Obj', s.readyState);
-					console.log("Socket opened.");
-				};
-
-				s.onclose = function (e) {
-					s.close();
-					console.log("Socket closed.");
-					var index = (Math.floor(Math.random() * (hosts.length - 0) + 0));
-					socket = init(hosts[index]);
-				}
-
-				s.onerror = function (e) {
-					stateConnection = 0;
-					console.log("Socket exception:", e);
-				};
-
-				s.onmessage = function (e) {
-					console.log("Socket message:", e.data);
-					var p = document.createElement("p");
-					p.innerHTML = e.data;
-					output.appendChild(p);
-				};
-				
-			} catch (ex) {
-				stateConnection = 0;
-				console.log("Socket exception:", ex);
-				s.close()
-				s = null;
-			}
-
-			return s;
-		}
-
-		var socket = init(hosts[0]);
-
-		form.addEventListener("submit", function (e) {
-			e.preventDefault();
-			socket.send(inputBox.value);
-			inputBox.value = "";
-			}, false)
-
-	</script>
- 
+	<script type="text/javascript" src='script.js'></script>
 </body>
 </html>
