@@ -6,21 +6,28 @@ import socket, hashlib, threading, base64, struct
 class WebSocketServer:
 
    mainsocket = ''
+   playersCount = 0
+   parentServer = ''
 
    def __init__(self, ClassName, host = '', port = 9876):
       self.mainsocket = socket.socket()
       self.mainsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       self.mainsocket.bind((host, port))
-      self.mainsocket.listen(5)
+      self.mainsocket.listen(2)
+      self.parentServer = ServArch(10)
+      self.parentServer.serverForever()
       self.serverActiveOn(ClassName)
 
    def serverActiveOn(self, ClassName):
       while 1:
          conn, addr = self.mainsocket.accept()
          print 'Connection from: ', addr
-         threading.Thread(target = ClassName, args = (conn, addr)).start()
+         self.parentServer.playerLogining()
+         threading.Thread(target = ClassName, args = (conn, addr, self.parentServer)).start()
 
 class WebSocketItem:
+
+   parentServer = None
 
    ControlFrames = {
                   'close' : 0x8,
@@ -62,7 +69,8 @@ class WebSocketItem:
    # Message from client
    receivedMessage = None
 
-   def __init__(self, client, addr):
+   def __init__(self, client, addr, parentServer):
+      self.parentServer = parentServer
       self.client = client
       self.addr = addr
       self.handshaked()
@@ -230,18 +238,88 @@ class WebSocketItem:
                return parts[1]
       return headers
 
-class Handler(WebSocketItem):
-   def handlers(self):
+class ServArch:
+   sock = ''
+   HOST = ''
+   PORT = ''
+
+   playersCount = 0
+   playersName = {}
+   
+   serversAddres = []
+   
+   otherServers = {'serv01' : ['localhost', 9090]}
+
+   def __init__(self, listenCount, host = 'localhost', port = 8080):
+      self.sock = socket.socket()
+      self.HOST = host
+      self.PORT = port
+      self.sock.bind((self.HOST, self.PORT))
+      self.sock.listen(listenCount)
+
+   def playerLogining(self):
+      self.playersCount += 1
+
+   def setName(self, name):
+      print name
+      self.playersName['player' + str(len(self.playersName))] = name
+      print self.playersName
+
+   def synchData(self, data):
+      for item in self.otherServers:
+         self.sendData(item[0], item[1], data)
+
+   def sendData(self, host, port, data):
+      sc = socket.socket()
+      sc.connect((host, port))
+      sc.send(data)
+      sc.close()
+
+   def gameBegining(self):
+      print 'game begining'
       while 1:
-            #ms = raw_input('enter message: ')
-            #self.sendMessage(ms)
-            data = self.client.recv(1024)
-            for byte in data:
-               self.parseMessage(ord(byte))
-            print str(self.receivedMessage)
-            self.state = 1
-            #self.sendMessage(str(self.receivedMessage))
-            #self.state = 1
-         #print 'Client closed:', self.addr
+         pass
+
+   def serverForever(self):
+      while 1:
+         conn, addr = self.sock.accept()
+         while 1:
+            data = conn.recv(1024)
+            if data:
+               print data.upper()
+            #if not data:
+               #break
+            #conn.send(data.upper())
+
+      conn.close()
+
+class Handler(WebSocketItem):
+
+   def handlers(self):
+      if self.parentServer.playersCount == 1 or self.parentServer.playersCount == 2:
+         print 'Enter Your name'
+         data = self.client.recv(1024)
+         for byte in data:
+            self.parseMessage(ord(byte))
+         self.state = 1
+         self.parentServer.setName(str(self.receivedMessage))
+         print 'thank you'
+
+      print len(self.parentServer.playersName)
+      if len(self.parentServer.playersName) == 2:
+         self.parentServer.gameBegining()
+      #while 1:
+               #ms = raw_input('enter message: ')
+               #self.sendMessage(ms)
+         #data = self.client.recv(1024)
+         #for byte in data:
+            #self.parseMessage(ord(byte))
+         #print str(self.receivedMessage)
+         #self.state = 1
+         #self.parentServer.sendData(str(self.receivedMessage))
+               #serv.serverForever()
+               #self.sendMessage(str(self.receivedMessage))
+               #self.state = 1
+            #print 'Client closed:', self.addr
 
 WebSocketServer(Handler)
