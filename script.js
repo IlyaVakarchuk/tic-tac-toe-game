@@ -59,6 +59,24 @@ function otherPlayerStep(data){
 	return data
 }
 
+function gameOver(result) {
+	var board = document.getElementById('board');
+	var table = document.getElementById('table');
+	table.style.display = 'none';
+	//alert(result);
+	if (result == 'GAME OVER! You WIN!') {
+		board.style.backgroundColor = '#aaeeb9';
+		board.style.backgroundImage = 'url(pic/win.png)';
+		board.style.backgroundSize = 'cover';
+	}
+	if (result == 'GAME OVER! You LOSE!') {
+		board.style.backgroundColor = '#e57272';
+		board.style.backgroundImage = 'url(pic/lose.png)';
+		board.style.backgroundSize = 'cover';
+	}
+	//board.style.innerHTML = result;
+}
+
 // Open new socket
 function init(host) {
 			
@@ -91,6 +109,10 @@ function init(host) {
 			var p = document.createElement("p");
 			if (e.data == 1 || e.data == 0) {
 				gameSign = e.data;
+			}
+			else if (e.data == 'GAME OVER! You WIN!' || e.data == 'GAME OVER! You LOSE!') {
+				//alert(e.data);
+				gameOver(e.data);
 			}
 			else {
 				var arr = e.data;

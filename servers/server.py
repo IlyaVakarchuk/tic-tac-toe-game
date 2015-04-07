@@ -269,14 +269,25 @@ class Game:
    def nextStep(self, data):
       data = data.split(' ')
       self.board[int(data[0])][int(data[1])] = data[2]
+      return self.curState()
 
    def checkBoard(self):
       if (self.board[0][0] == self.board[1][0] and  self.board[1][0] == self.board[2][0] and self.board[2][0] == self.board[0][0] and self.board[0][0] != -1) or \
-      (self.board[0][0] == self.board[1][0] and  self.board[0][1] == self.board[0][2] and self.board[0][2] == self.board[0][0] and self.board[0][0] != -1) or \
+      (self.board[0][0] == self.board[0][1] and  self.board[0][1] == self.board[0][2] and self.board[0][2] == self.board[0][0] and self.board[0][0] != -1) or \
       (self.board[1][0] == self.board[1][1] and  self.board[1][1] == self.board[1][2] and self.board[1][2] == self.board[1][0] and self.board[1][0] != -1) or \
       (self.board[2][0] == self.board[2][1] and  self.board[2][1] == self.board[2][2] and self.board[2][2] == self.board[2][0] and self.board[2][0] != -1) or \
       (self.board[0][2] == self.board[1][2] and  self.board[1][2] == self.board[2][2] and self.board[2][2] == self.board[0][2] and self.board[0][2] != -1):
          self.gameState = 1
+
+   def curState(self):
+      if (self.board[0][0] == self.board[1][0] and  self.board[1][0] == self.board[2][0] and self.board[2][0] == self.board[0][0] and self.board[0][0] != -1) or \
+      (self.board[0][0] == self.board[0][1] and  self.board[0][1] == self.board[0][2] and self.board[0][2] == self.board[0][0] and self.board[0][0] != -1) or \
+      (self.board[1][0] == self.board[1][1] and  self.board[1][1] == self.board[1][2] and self.board[1][2] == self.board[1][0] and self.board[1][0] != -1) or \
+      (self.board[2][0] == self.board[2][1] and  self.board[2][1] == self.board[2][2] and self.board[2][2] == self.board[2][0] and self.board[2][0] != -1) or \
+      (self.board[0][2] == self.board[1][2] and  self.board[1][2] == self.board[2][2] and self.board[2][2] == self.board[0][2] and self.board[0][2] != -1):
+         return 1
+      else:
+       return 0
 
       
 
@@ -286,6 +297,7 @@ class Handler(WebSocketItem):
    secondaryServers = [['', 9877], ['', 9872]]
 
    playerName = ''
+   gameState = 0
 
    def synchData(self, data):
       for i in range(0, len(self.secondaryServers)):
@@ -333,22 +345,29 @@ class Handler(WebSocketItem):
                   print 'in game'
                   break
          while 1:
-            #self.sendMessage(str(self.gameItem.board))
             data = self.client.recv(1024)
             for byte in data:
                self.parseMessage(ord(byte))
             self.state = 1
             print str(self.receivedMessage)
-            self.gameItem.nextStep(str(self.receivedMessage))
-            self.synchData(str(self.gameItem.formData()))
+            self.gameState = self.gameItem.nextStep(str(self.receivedMessage))
             self.gameItem.checkBoard()
+            self.synchData(str(self.gameItem.formData()))
             if self.gameItem.gameState == 1:
-               print 'WIN'
+               if self.gameState == 1:
+                  print self.playerName + ' WIN'
+                  self.sendMessage('GAME OVER! You WIN!')
+               elif self.gameState == 0:
+                  print self.playerName + ' LOSE'
+                  self.sendMessage('GAME OVER! You LOSE!')
                break;
             tmp = str(self.gameItem.board)
             while 1: 
-               if (tmp != str(self.gameItem.board)):
-                  self.sendMessage(str(self.gameItem.board))
+               if tmp != str(self.gameItem.board) and self.gameItem.gameState != 1:
+                     self.sendMessage(str(self.gameItem.board))
+                     break
+               if self.gameItem.gameState == 1:
+                  self.sendMessage('GAME OVER! You LOSE!')
                   break
             #self.sendMessage(str(self.gameItem.board))
       #while 1:
