@@ -25,8 +25,7 @@ class WebSocketServer:
             print 'Connection from: ', addr
             threading.Thread(target = ClassName, args = (conn, addr, data, self.vurGame)).start()
          elif data:
-            self.vurGame.commonData = data
-            self.vurGame.parseData()
+            self.vurGame.parseData(data)
             print self.vurGame.userName
             print self.vurGame.board
 
@@ -249,24 +248,28 @@ class WebSocketItem:
 # Contains common data for all users
 class Game:
    userName = []
-   board = {}
-
-   commonData = {}
+   board = []
 
    def __init__(self):
-      pass
+      for i in range(3):
+         self.board.append([0] * 3)
+      print self.board
 
-   def parseData(self):
-      data = ast.literal_eval(self.commonData)
-      self.userName = data['players']
-      self.board = data['board']
-
+   def parseData(self, data):
+      newdata = ast.literal_eval(data)
+      self.userName = newdata['players']
+      self.board = newdata['board']
 
    def formData(self):
-      self.commonData['players'] = self.userName
-      self.commonData['board'] = self.board
-      return self.commonData
+      data = {}
+      data['players'] = self.userName
+      data['board'] = self.board
+      return data
 
+   def nextStep(self, data):
+      data = data.split(' ')
+      self.board[int(data[0])][int(data[1])] = str(data[2])
+      
 
 class Handler(WebSocketItem):
 
@@ -316,6 +319,7 @@ class Handler(WebSocketItem):
             for byte in data:
                self.parseMessage(ord(byte))
             self.state = 1
+            self.gameItem.nextStep(str(self.receivedMessage))
             self.synchData(str(self.gameItem.formData()))
             print str(self.receivedMessage)
 
