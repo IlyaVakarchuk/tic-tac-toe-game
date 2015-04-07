@@ -268,7 +268,7 @@ class Game:
 
    def nextStep(self, data):
       data = data.split(' ')
-      self.board[int(data[0])][int(data[1])] = str(data[2])
+      self.board[int(data[0])][int(data[1])] = data[2]
 
    def checkBoard(self):
       if (self.board[0][0] == self.board[1][0] and  self.board[1][0] == self.board[2][0] and self.board[2][0] == self.board[0][0] and self.board[0][0] != -1) or \
@@ -318,11 +318,22 @@ class Handler(WebSocketItem):
 
       
       if len(self.gameItem.userName) >= 2:
-         self.sendMessage('GAME BEGIN')
+         if self.playerNum == 1:
+            self.sendMessage("0")
+         elif self.playerNum == 2:
+            self.sendMessage("1")
+
          print 'GAME BEGIN'
          self.synchData(str(self.gameItem.formData()))
-         
+         tmp = str(self.gameItem.board)
+         if self.playerNum == 2:
+            while 1: 
+               if (tmp != str(self.gameItem.board)):
+                  self.sendMessage(str(self.gameItem.board))
+                  print 'in game'
+                  break
          while 1:
+            #self.sendMessage(str(self.gameItem.board))
             data = self.client.recv(1024)
             for byte in data:
                self.parseMessage(ord(byte))
@@ -334,6 +345,12 @@ class Handler(WebSocketItem):
             if self.gameItem.gameState == 1:
                print 'WIN'
                break;
+            tmp = str(self.gameItem.board)
+            while 1: 
+               if (tmp != str(self.gameItem.board)):
+                  self.sendMessage(str(self.gameItem.board))
+                  break
+            #self.sendMessage(str(self.gameItem.board))
       #while 1:
             #ms = raw_input('enter message: ')
             #self.sendMessage(ms)
