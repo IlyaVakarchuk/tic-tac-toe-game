@@ -5,16 +5,14 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	
-	<form id="form">
-		<input type="text" id="message">
-		<button type="submit">Send</button>
-		
-	</form>
-	<button id="init">Connect</button>
-	<hr>
-
+	<header>
+		<button id='connect'>Connect</button>
+		<button id='login' disabled>Login</button>
+		<input type='text' id='name' autofocus disabled placeholder="Your's name">
+	</header>	
 	<article id='board'>
+	
+		<div id='wait-indicator'><img src='pic/wait.png'><p>Wait second players...</p></div>
 		<ul id='table'>
 			<li class='cell' data-item='0 0'></li> <li class='cell' data-item='0 1'></li> <li class='cell' data-item='0 2'></li> <br>
 			<li class='cell' data-item='1 0'></li> <li class='cell' data-item='1 1'></li> <li class='cell' data-item='1 2'></li> <br>

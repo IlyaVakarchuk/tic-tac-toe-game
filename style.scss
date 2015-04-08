@@ -1,16 +1,57 @@
+@mixin animation($name, $duration, $iterationCount, $timingFunction) {
+	-webkit-animation: $name $duration $iterationCount $timingFunction;
+	   -moz-animation: $name $duration $iterationCount $timingFunction;
+	    -ms-animation: $name $duration $iterationCount $timingFunction;
+		    animation: $name $duration $iterationCount $timingFunction;
+}
+
 #output {
 	border: solid 1px #000;
+}
+
+header {
+	#login {
+		opacity: 0.2;
+	}
+	#name {
+		opacity: 0.2;
+	}
 }
 
 #board {
 	width: 280px;
 	height: 280px;
+	margin: 0 auto;
+	text-align: center;
 
+	#wait-indicator {
+		display: none;
+
+		img {
+			@include animation(spin, 600ms, infinite, linear);
+		}
+		@-webkit-keyframes spin {
+			    from { -webkit-transform: rotate(0deg); }
+			    to { -webkit-transform: rotate(360deg); }
+			}
+			@-ms-keyframes spin {
+			    from { -ms-transform: rotate(0deg); }
+			    to { -ms-transform: rotate(360deg); }
+			}
+			@-webkit-keyframes spin {
+			    from { -webkit-transform: rotate(0deg); }
+			    to { -webkit-transform: rotate(360deg); }
+			}
+			@keyframes spin {
+			    from { transform:rotate(0deg);}
+			    to { transform:rotate(360deg); }
+			}
+	}
 	#table {
 		//background-color: #3faac1;
 		padding: 0;
 		width: auto;
-		display: inline-block;
+		display: none;
 		.cell {
 			width: 80px;
 			height: 80px;
