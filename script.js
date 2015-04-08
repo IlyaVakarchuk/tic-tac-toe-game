@@ -16,11 +16,12 @@ var stat = document.getElementById('statistic');
 var step = document.getElementById('step');
 
 // Connect to main server
-var connect = document.getElementById('connect');
+
+var login = document.getElementById('login');
 connect.addEventListener('click', function() { 
 	 socket = init(hosts[0]);
-	 var name = document.getElementById('name');
-	 var login = document.getElementById('login');
+	 var connect = document.getElementById('connect');
+	var name = document.getElementById('name');
 	 name.disabled = 0;
 	 name.style.opacity = '1';
 	 login.disabled = 0;
@@ -30,6 +31,12 @@ connect.addEventListener('click', function() {
 	 	socket.send(name.value);
 	 	var wait = document.getElementById('wait-indicator');
 	 	wait.style.display = 'block';
+	 	connect.disabled = 1;
+	 	name.disabled = 1;
+	 	login.disabled = 1;
+	 	connect.style.opacity = '0.2';
+	 	name.style.opacity = '0.2';
+	 	login.style.opacity = '0.2';
 	 },false)
 } ,false)
 
@@ -112,6 +119,11 @@ function gameOver(result) {
 		board.style.backgroundImage = 'url(pic/lose.png)';
 		board.style.backgroundSize = 'cover';
 	}
+	if (result == 'GAME OVER! STANDOFF!') {
+		board.style.backgroundColor = '#c3c3c3';
+		board.style.backgroundImage = 'url(pic/standoff.png)';
+		board.style.backgroundSize = 'cover';
+	}
 }
 
 // Open new socket
@@ -153,9 +165,11 @@ function init(host) {
 				}
 				gameBegin();
 			}
-			else if (e.data == 'GAME OVER! You WIN!' || e.data == 'GAME OVER! You LOSE!') {
-				//alert(e.data);
+			else if (e.data == 'GAME OVER! You WIN!' || e.data == 'GAME OVER! You LOSE!' || e.data == 'GAME OVER! STANDOFF!') {
 				gameOver(e.data);
+			}
+			else if (e.data == 'STEP?') {
+				socket.send(gameState);
 			}
 			else {
 				var arr = e.data;

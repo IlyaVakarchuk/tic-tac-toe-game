@@ -271,7 +271,6 @@ class Game:
    def nextStep(self, data):
       data = data.split(' ')
       self.board[int(data[0])][int(data[1])] = data[2]
-      #return self.curState()
 
    def checkBoard(self):
       if (self.board[0][0] == self.board[1][0] and  self.board[1][0] == self.board[2][0] and self.board[2][0] == self.board[0][0] and self.board[0][0] != -1) or \
@@ -283,21 +282,15 @@ class Game:
       (self.board[0][2] == self.board[1][1] and  self.board[1][1] == self.board[2][0] and self.board[2][0] == self.board[0][2] and self.board[0][2] != -1) or \
       (self.board[0][2] == self.board[1][2] and  self.board[1][2] == self.board[2][2] and self.board[2][2] == self.board[0][2] and self.board[0][2] != -1):
          self.gameState = 1
+      elif self.standoff():
+         self.gameState = 2
 
-   def curState(self):
-      if (self.board[0][0] == self.board[1][0] and  self.board[1][0] == self.board[2][0] and self.board[2][0] == self.board[0][0] and self.board[0][0] != -1) or \
-      (self.board[0][0] == self.board[0][1] and  self.board[0][1] == self.board[0][2] and self.board[0][2] == self.board[0][0] and self.board[0][0] != -1) or \
-      (self.board[1][0] == self.board[1][1] and  self.board[1][1] == self.board[1][2] and self.board[1][2] == self.board[1][0] and self.board[1][0] != -1) or \
-      (self.board[2][0] == self.board[2][1] and  self.board[2][1] == self.board[2][2] and self.board[2][2] == self.board[2][0] and self.board[2][0] != -1) or \
-      (self.board[0][1] == self.board[1][1] and  self.board[1][1] == self.board[2][1] and self.board[2][1] == self.board[0][1] and self.board[0][1] != -1) or \
-      (self.board[0][0] == self.board[1][1] and  self.board[1][1] == self.board[2][2] and self.board[2][2] == self.board[0][0] and self.board[0][0] != -1) or \
-      (self.board[0][2] == self.board[1][1] and  self.board[1][1] == self.board[2][0] and self.board[2][0] == self.board[0][2] and self.board[0][2] != -1) or \
-      (self.board[0][2] == self.board[1][2] and  self.board[1][2] == self.board[2][2] and self.board[2][2] == self.board[0][2] and self.board[0][2] != -1):
-         return 1
-      else:
-       return 0
-
-      
+   def standoff(self):
+      for i in range (3):
+         for j in range(3):
+            if self.board[i][j] == -1:
+               return 0
+      return 1
 
 class Handler(WebSocketItem):
 
@@ -415,13 +408,17 @@ class Handler(WebSocketItem):
             if self.gameItem.gameState == 1:
                print ' WIN'
                self.sendMessage('GAME OVER! You WIN!')
-               break;
+               break
+            if self.gameItem.gameState == 2:
+               print 'standoff'
+               self.sendMessage('GAME OVER! STANDOFF!')
+               break
 
             # User waiting for his turn and track another user moves
             tmp = str(self.gameItem.board)
             while 1: 
                # Get data about another user move
-               if tmp != str(self.gameItem.board) and self.gameItem.gameState != 1:
+               if tmp != str(self.gameItem.board) and self.gameItem.gameState != 1 and self.gameItem.gameState != 2:
                      self.sendMessage(str(self.gameItem.board))
                      break
                # If the end of the game, it shall notify the players
@@ -429,6 +426,10 @@ class Handler(WebSocketItem):
                      print 'LOSE'
                      self.sendMessage('GAME OVER! You LOSE!')
                      break
+               if self.gameItem.gameState == 2:
+                  print 'standoff'
+                  self.sendMessage('GAME OVER! STANDOFF!')
+                  break
 
          while 1:
             pass
