@@ -271,7 +271,7 @@ class Game:
    def nextStep(self, data):
       data = data.split(' ')
       self.board[int(data[0])][int(data[1])] = data[2]
-      return self.curState()
+      #return self.curState()
 
    def checkBoard(self):
       if (self.board[0][0] == self.board[1][0] and  self.board[1][0] == self.board[2][0] and self.board[2][0] == self.board[0][0] and self.board[0][0] != -1) or \
@@ -302,11 +302,10 @@ class Game:
 class Handler(WebSocketItem):
 
    playerNum = 0
+
    secondaryServers = [['', 9877], ['', 9872]]
 
-   playerName = ''
-   gameState = 0
-
+   # Send comman data to working server
    def synchData(self, data):
       for i in range(0, len(self.secondaryServers)):
          self.sendData(data, self.secondaryServers[i][0], self.secondaryServers[i][1])
@@ -331,15 +330,22 @@ class Handler(WebSocketItem):
          for byte in data:
             self.parseMessage(ord(byte))
          self.state = 1
-         self.gameItem.userName.append(str(self.receivedMessage))
-         self.playerName = str(self.receivedMessage)
+
+         # Add new user name
+         self.gameItem.userName.append(str(self.receivedMessage)) 
+         
+         # Connection number (Determines the sign)
          self.playerNum = len(self.gameItem.userName)
+         
          self.synchData(str(self.gameItem.formData()))
+         
          print 'My name : ' + str(self.receivedMessage) + ', I am ' + str(self.playerNum) + ' player'
+         
+         # Waiting for the second player
          while len(self.gameItem.userName) < 2:
             pass
 
-      
+      # THE GAME STARTED
       if len(self.gameItem.userName) >= 2:
          # Select of sides
          # 0 - CROSS (Firts login player)
@@ -353,20 +359,26 @@ class Handler(WebSocketItem):
             print 'GAME BEGIN'
             self.synchData(str(self.gameItem.formData()))
             tmp = str(self.gameItem.board)
+            # The game begins by the player with crosses
             if self.playerNum == 2:
                while 1: 
                   if (tmp != str(self.gameItem.board)):
                      self.sendMessage(str(self.gameItem.board))
                      print 'in game'
                      break
+         # Game starts from here if there was switching to another new server
          else:
             print 'NEW SERVER'
+            # Identify signs of players
+            # Ask for the status of the game
             self.sendMessage('STEP?')
             while 1:
                data = self.client.recv(1024)
                for byte in data:
                   self.parseMessage(ord(byte))
                self.state = 1
+               # 0 -The course of another player
+               # 1 - the course of this player
                if str(self.receivedMessage) != '1':
                   tmp = str(self.gameItem.board)
                   while 1:
@@ -380,30 +392,41 @@ class Handler(WebSocketItem):
                else:
                   break
 
+         # Game section
          while 1:
+            # Waiting move current player
             data = self.client.recv(1024)
             for byte in data:
                self.parseMessage(ord(byte))
             self.state = 1
+
             print str(self.receivedMessage)
-            self.gameState = self.gameItem.nextStep(str(self.receivedMessage))
+            
+            # Update the game board
+            self.gameItem.nextStep(str(self.receivedMessage))
+            
+            # Check the game board for a winner
             self.gameItem.checkBoard()
+            
+            # Synch common data between servers
             self.synchData(str(self.gameItem.formData()))
+
+            # If the end of the game, it shall notify the players
             if self.gameItem.gameState == 1:
-               if self.gameState == 1:
-                  print ' WIN'
-                  self.sendMessage('GAME OVER! You WIN!')
-               else:
-                  print ' standoff'
-                  self.sendMessage('GAME OVER! You LOSE!')
+               print ' WIN'
+               self.sendMessage('GAME OVER! You WIN!')
                break;
+
+            # User waiting for his turn and track another user moves
             tmp = str(self.gameItem.board)
             while 1: 
+               # Get data about another user move
                if tmp != str(self.gameItem.board) and self.gameItem.gameState != 1:
                      self.sendMessage(str(self.gameItem.board))
                      break
+               # If the end of the game, it shall notify the players
                if self.gameItem.gameState == 1:
-                     print ' LOSE'
+                     print 'LOSE'
                      self.sendMessage('GAME OVER! You LOSE!')
                      break
 
