@@ -5,10 +5,6 @@
 		    animation: $name $duration $iterationCount $timingFunction;
 }
 
-#output {
-	border: solid 1px #000;
-}
-
 header {
 	#login {
 		opacity: 0.2;
@@ -56,7 +52,6 @@ header {
 			}
 	}
 	#table {
-		//background-color: #3faac1;
 		padding: 0;
 		width: auto;
 		display: none;

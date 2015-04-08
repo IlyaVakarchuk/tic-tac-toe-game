@@ -5,25 +5,30 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+	<!-- Block with CONNECTION and LOGIN interface -->
 	<header>
 		<button id='connect'>Connect</button>
 		<button id='login' disabled>Login</button>
 		<input type='text' id='name' autofocus disabled placeholder="Your's name">
 	</header>
-	
+
+	<!-- Game zone. -->
 	<article id='board'>
+		<!-- Contains information about current progress -->
 		<div id='statistic' >
 			<p id='step'>Second player step</p>
 		</div>
+
+		<!-- Waiting indicator. Show to first login player while he waits another player -->
 		<div id='wait-indicator'><img src='pic/wait.png'><p>Wait second players...</p></div>
+
+		<!-- Game board -->
 		<ul id='table'>
 			<li class='cell' data-item='0 0'></li> <li class='cell' data-item='0 1'></li> <li class='cell' data-item='0 2'></li> <br>
 			<li class='cell' data-item='1 0'></li> <li class='cell' data-item='1 1'></li> <li class='cell' data-item='1 2'></li> <br>
 			<li class='cell' data-item='2 0'></li> <li class='cell' data-item='2 1'></li> <li class='cell' data-item='2 2'></li> <br>
 		</ul>
 	</article>
-	
-	<div id="output"></div>
 	<script type="text/javascript" src='script.js'></script>
 </body>
 </html>
