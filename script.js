@@ -1,29 +1,8 @@
-var inputBox = document.getElementById("message");
-		var output = document.getElementById("output");
-		var connect = document.getElementById("init");
-		var form = document.getElementById("form");
+var output = document.getElementById("output");
 
 var gameSign = null;
 
-// Event for cell
-var cell = document.getElementsByClassName('cell');
-for (var i = 0; i < cell.length; i++) {
-	cell[i].addEventListener('click', function(e){
-		if (!e.target.classList.contains('check')) {
-			var possition = e.target.getAttribute('data-item');
-			e.target.classList.add('check');
-			if (gameSign == 0) {
-				e.target.style.backgroundImage = 'url(pic/cross.png)';
-				e.target.style.backgroundSize = 'cover';
-			} else if (gameSign == 1) {
-				e.target.style.backgroundImage = 'url(pic/circle.png)';
-				e.target.style.backgroundSize = 'cover';
-			}
-			socket.send(possition + ' ' + gameSign);
-		}
-	}, false);
-}
-
+var gameState = 0;
 
 // Active servers
 var hosts = ["ws://localhost:9876/test", "ws://localhost:9872/test", "ws://localhost:9877/test"]
@@ -31,6 +10,58 @@ var hosts = ["ws://localhost:9876/test", "ws://localhost:9872/test", "ws://local
 // Web Socket object
 var socket = null;
 
+var cell = null;
+
+// Connect to main server
+var connect = document.getElementById('connect');
+connect.addEventListener('click', function() { 
+	 socket = init(hosts[0]);
+	 var name = document.getElementById('name');
+	 var login = document.getElementById('login');
+	 name.disabled = 0;
+	 name.style.opacity = '1';
+	 login.disabled = 0;
+	 login.style.opacity = '1';
+	 login.addEventListener('click', function(){
+	 	var name = document.getElementById('name');
+	 	socket.send(name.value);
+	 	var wait = document.getElementById('wait-indicator');
+	 	wait.style.display = 'block';
+	 },false)
+} ,false)
+
+// Event for cell
+function addEvents() {
+	cell = document.getElementsByClassName('cell');
+	for (var i = 0; i < cell.length; i++) {
+		cell[i].addEventListener('click', function(e){
+			if (!e.target.classList.contains('check') && gameState == 1) {
+				var possition = e.target.getAttribute('data-item');
+				e.target.classList.add('check');
+				if (gameSign == 0) {
+					e.target.style.backgroundImage = 'url(pic/cross.png)';
+					e.target.style.backgroundSize = 'cover';
+				} else if (gameSign == 1) {
+					e.target.style.backgroundImage = 'url(pic/circle.png)';
+					e.target.style.backgroundSize = 'cover';
+				}
+				socket.send(possition + ' ' + gameSign);
+				gameState = 0;
+			}
+		}, false);
+	}
+}
+
+// Show game board
+function gameBegin() {
+	var wait = document.getElementById('wait-indicator');
+	wait.style.display = 'none';
+	var table = document.getElementById('table');
+	table.style.display = 'inline-block'
+	addEvents();
+}
+
+// Change board. 
 function otherPlayerStep(data){
 	data = data.replace('[[', '');
 	data = data.replace(',', '');
@@ -59,11 +90,11 @@ function otherPlayerStep(data){
 	return data
 }
 
+// Show result of the game
 function gameOver(result) {
 	var board = document.getElementById('board');
 	var table = document.getElementById('table');
 	table.style.display = 'none';
-	//alert(result);
 	if (result == 'GAME OVER! You WIN!') {
 		board.style.backgroundColor = '#aaeeb9';
 		board.style.backgroundImage = 'url(pic/win.png)';
@@ -74,7 +105,6 @@ function gameOver(result) {
 		board.style.backgroundImage = 'url(pic/lose.png)';
 		board.style.backgroundSize = 'cover';
 	}
-	//board.style.innerHTML = result;
 }
 
 // Open new socket
@@ -109,6 +139,10 @@ function init(host) {
 			var p = document.createElement("p");
 			if (e.data == 1 || e.data == 0) {
 				gameSign = e.data;
+				if (gameSign == 0) {
+					gameState = 1
+				}
+				gameBegin();
 			}
 			else if (e.data == 'GAME OVER! You WIN!' || e.data == 'GAME OVER! You LOSE!') {
 				//alert(e.data);
@@ -117,6 +151,7 @@ function init(host) {
 			else {
 				var arr = e.data;
 				arr = otherPlayerStep(arr);
+				gameState = 1;
 			}
 			p.innerHTML = e.data;
 			output.appendChild(p);
@@ -130,15 +165,3 @@ function init(host) {
 
 	return s;
 }
-
-// Create Web Socket object
-var socket = init(hosts[0]);
-
-		/*connect.addEventListener("click", function () {
-			socket = init(hosts[0]);
-			}, false)*/
-form.addEventListener("submit", function (e) {
-	e.preventDefault();
-	socket.send(inputBox.value);
-	inputBox.value = "";
-}, false)
