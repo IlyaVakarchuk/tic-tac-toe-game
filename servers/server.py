@@ -250,10 +250,12 @@ class Game:
    userName = []
    board = []
    gameState = 0
+   tmpBoard = []
 
    def __init__(self):
       for i in range(3):
          self.board.append([-1] * 3)
+         self.tmpBoard.append([-1] * 3)
 
    def parseData(self, data):
       newdata = ast.literal_eval(data)
@@ -276,6 +278,9 @@ class Game:
       (self.board[0][0] == self.board[0][1] and  self.board[0][1] == self.board[0][2] and self.board[0][2] == self.board[0][0] and self.board[0][0] != -1) or \
       (self.board[1][0] == self.board[1][1] and  self.board[1][1] == self.board[1][2] and self.board[1][2] == self.board[1][0] and self.board[1][0] != -1) or \
       (self.board[2][0] == self.board[2][1] and  self.board[2][1] == self.board[2][2] and self.board[2][2] == self.board[2][0] and self.board[2][0] != -1) or \
+      (self.board[0][1] == self.board[1][1] and  self.board[1][1] == self.board[2][1] and self.board[2][1] == self.board[0][1] and self.board[0][1] != -1) or \
+      (self.board[0][0] == self.board[1][1] and  self.board[1][1] == self.board[2][2] and self.board[2][2] == self.board[0][0] and self.board[0][0] != -1) or \
+      (self.board[0][2] == self.board[1][1] and  self.board[1][1] == self.board[2][0] and self.board[2][0] == self.board[0][2] and self.board[0][2] != -1) or \
       (self.board[0][2] == self.board[1][2] and  self.board[1][2] == self.board[2][2] and self.board[2][2] == self.board[0][2] and self.board[0][2] != -1):
          self.gameState = 1
 
@@ -284,6 +289,9 @@ class Game:
       (self.board[0][0] == self.board[0][1] and  self.board[0][1] == self.board[0][2] and self.board[0][2] == self.board[0][0] and self.board[0][0] != -1) or \
       (self.board[1][0] == self.board[1][1] and  self.board[1][1] == self.board[1][2] and self.board[1][2] == self.board[1][0] and self.board[1][0] != -1) or \
       (self.board[2][0] == self.board[2][1] and  self.board[2][1] == self.board[2][2] and self.board[2][2] == self.board[2][0] and self.board[2][0] != -1) or \
+      (self.board[0][1] == self.board[1][1] and  self.board[1][1] == self.board[2][1] and self.board[2][1] == self.board[0][1] and self.board[0][1] != -1) or \
+      (self.board[0][0] == self.board[1][1] and  self.board[1][1] == self.board[2][2] and self.board[2][2] == self.board[0][0] and self.board[0][0] != -1) or \
+      (self.board[0][2] == self.board[1][1] and  self.board[1][1] == self.board[2][0] and self.board[2][0] == self.board[0][2] and self.board[0][2] != -1) or \
       (self.board[0][2] == self.board[1][2] and  self.board[1][2] == self.board[2][2] and self.board[2][2] == self.board[0][2] and self.board[0][2] != -1):
          return 1
       else:
@@ -315,6 +323,9 @@ class Handler(WebSocketItem):
          sck.close()
 
    def handlers(self):
+
+      # INIT GAME
+      # First player login and wait another player
       if len(self.gameItem.userName) < 2:
          data = self.client.recv(1024)
          for byte in data:
@@ -330,20 +341,45 @@ class Handler(WebSocketItem):
 
       
       if len(self.gameItem.userName) >= 2:
-         if self.playerNum == 1:
-            self.sendMessage("0")
-         elif self.playerNum == 2:
-            self.sendMessage("1")
+         # Select of sides
+         # 0 - CROSS (Firts login player)
+         # 1 - TOE (Second login player)
+         if self.gameItem.board == self.gameItem.tmpBoard:
+            if self.playerNum == 1:
+               self.sendMessage("0")
+            elif self.playerNum == 2:
+               self.sendMessage("1")
 
-         print 'GAME BEGIN'
-         self.synchData(str(self.gameItem.formData()))
-         tmp = str(self.gameItem.board)
-         if self.playerNum == 2:
-            while 1: 
-               if (tmp != str(self.gameItem.board)):
-                  self.sendMessage(str(self.gameItem.board))
-                  print 'in game'
+            print 'GAME BEGIN'
+            self.synchData(str(self.gameItem.formData()))
+            tmp = str(self.gameItem.board)
+            if self.playerNum == 2:
+               while 1: 
+                  if (tmp != str(self.gameItem.board)):
+                     self.sendMessage(str(self.gameItem.board))
+                     print 'in game'
+                     break
+         else:
+            print 'NEW SERVER'
+            self.sendMessage('STEP?')
+            while 1:
+               data = self.client.recv(1024)
+               for byte in data:
+                  self.parseMessage(ord(byte))
+               self.state = 1
+               if str(self.receivedMessage) != '1':
+                  tmp = str(self.gameItem.board)
+                  while 1:
+                     if tmp != str(self.gameItem.board) and self.gameItem.gameState != 1:
+                        self.sendMessage(str(self.gameItem.board))
+                        break
+                     if self.gameItem.gameState == 1:
+                        self.sendMessage('GAME OVER! You LOSE!')
+                        break
                   break
+               else:
+                  break
+
          while 1:
             data = self.client.recv(1024)
             for byte in data:
@@ -355,10 +391,10 @@ class Handler(WebSocketItem):
             self.synchData(str(self.gameItem.formData()))
             if self.gameItem.gameState == 1:
                if self.gameState == 1:
-                  print self.playerName + ' WIN'
+                  print ' WIN'
                   self.sendMessage('GAME OVER! You WIN!')
-               elif self.gameState == 0:
-                  print self.playerName + ' LOSE'
+               else:
+                  print ' standoff'
                   self.sendMessage('GAME OVER! You LOSE!')
                break;
             tmp = str(self.gameItem.board)
@@ -367,23 +403,11 @@ class Handler(WebSocketItem):
                      self.sendMessage(str(self.gameItem.board))
                      break
                if self.gameItem.gameState == 1:
-                  self.sendMessage('GAME OVER! You LOSE!')
-                  break
-            #self.sendMessage(str(self.gameItem.board))
-      #while 1:
-            #ms = raw_input('enter message: ')
-            #self.sendMessage(ms)
-        #    data = self.client.recv(1024)
-         #   for byte in data:
-          #     self.parseMessage(ord(byte))
-           # print str(self.receivedMessage)
-            #self.state = 1
-            #sck = socket.socket()
-            #sck.connect(('', 9877))
-            #sck.send(str(self.receivedMessage))
-            
-            #self.sendMessage(str(self.receivedMessage))
-            #self.state = 1
-         #print 'Client closed:', self.addr
+                     print ' LOSE'
+                     self.sendMessage('GAME OVER! You LOSE!')
+                     break
+
+         while 1:
+            pass
 
 WebSocketServer(Handler)
