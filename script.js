@@ -12,6 +12,9 @@ var socket = null;
 
 var cell = null;
 
+var stat = document.getElementById('statistic');
+var step = document.getElementById('step');
+
 // Connect to main server
 var connect = document.getElementById('connect');
 connect.addEventListener('click', function() { 
@@ -47,6 +50,8 @@ function addEvents() {
 				}
 				socket.send(possition + ' ' + gameSign);
 				gameState = 0;
+				stat.style.backgroundColor = '#e57272';
+				step.innerHTML = 'Second player step';
 			}
 		}, false);
 	}
@@ -59,6 +64,7 @@ function gameBegin() {
 	var table = document.getElementById('table');
 	table.style.display = 'inline-block'
 	addEvents();
+	stat.style.display = 'inline-block';
 }
 
 // Change board. 
@@ -95,6 +101,7 @@ function gameOver(result) {
 	var board = document.getElementById('board');
 	var table = document.getElementById('table');
 	table.style.display = 'none';
+	stat.style.display = 'none';
 	if (result == 'GAME OVER! You WIN!') {
 		board.style.backgroundColor = '#aaeeb9';
 		board.style.backgroundImage = 'url(pic/win.png)';
@@ -141,6 +148,8 @@ function init(host) {
 				gameSign = e.data;
 				if (gameSign == 0) {
 					gameState = 1
+					stat.style.backgroundColor = '#aaeeb9';
+					step.innerHTML = 'You step';
 				}
 				gameBegin();
 			}
@@ -152,6 +161,8 @@ function init(host) {
 				var arr = e.data;
 				arr = otherPlayerStep(arr);
 				gameState = 1;
+				stat.style.backgroundColor = '#aaeeb9';
+				step.innerHTML = 'You step';
 			}
 			p.innerHTML = e.data;
 			output.appendChild(p);
